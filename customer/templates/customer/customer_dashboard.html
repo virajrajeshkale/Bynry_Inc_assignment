@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS for design -->
+    <style>
+        body {
+            background-color: #f4f6f9; /* Light background for better contrast */
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar {
+            background-color: #007bff; /* Navbar color */
+        }
+
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+        }
+
+        .navbar-brand:hover, .nav-link:hover {
+            color: #ffcc00 !important;
+        }
+
+        .container {
+            margin-top: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .service-request-card {
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .service-request-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 15px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .request-title {
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .request-info {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .status {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .status.pending {
+            color: #ffcc00;
+        }
+
+        .status.in-progress {
+            color: #00aaff;
+        }
+
+        .status.completed {
+            color: #28a745;
+        }
+
+        .request-date {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .service-request-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .request-file {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .request-file i {
+            margin-right: 5px;
+        }
+
+        .create-request-btn {
+            background-color: #00aaff;
+            color: white;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            padding: 10px 25px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .create-request-btn:hover {
+            background-color: #0077cc;
+        }
+
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50px;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Footer Style */
+        footer {
+            background-color: #2d2d2d;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: #ffcc00;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        footer .social-icons i {
+            font-size: 1.5rem;
+            margin: 0 10px;
+            color: #fff;
+        }
+
+        footer .social-icons i:hover {
+            color: #ffcc00;
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border-radius: 15px;
+        }
+
+        .modal-header, .modal-body {
+            background-color: #f8f9fa;
+        }
+
+        .modal-body img {
+            width: 100%;
+            height: auto;
+            max-height: 600px; /* Limit image height for large images */
+            object-fit: contain;
+        }
+
+        /* Modal Dialog Styling */
+        .modal-dialog {
+            max-width: 90%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <!-- Title on the left -->
+            <a class="navbar-brand" href="#">Gas Utility Service</a>
+            
+            <!-- Logout button on the right -->
+            <div class="ml-auto">
+                <a href="{% url 'logout' %}" class="nav-link logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Welcome, {{ user.username }}</h1>
+        <p class="text-center">Here are your service requests:</p>
+
+        <!-- Check if there are any requests -->
+        {% if requests %}
+            <div class="service-request-list">
+                {% for request in requests %}
+                    <div class="service-request-card">
+                        <div class="request-title">{{ request.title }}</div>
+                        <p>{{ request.description }}</p>
+                        <p class="status {% if request.status == 'pending' %}pending{% elif request.status == 'in-progress' %}in-progress{% else %}completed{% endif %}">
+                            Status: {{ request.status|capfirst }}
+                        </p>
+                        
+                        <!-- Request Type and Date -->
+                        <p class="request-info">Request Type: {{ request.get_request_type_display }}</p>
+                        <p class="request-date">{{ request.created_at|date:"F j, Y" }} · {{ request.created_at|date:"g:i A" }}</p>
+
+                        <!-- File Attachment with View Button -->
+                        {% if request.file %}
+                            <div class="request-file">
+                                <i class="fas fa-file-alt"></i>
+                                <a href="{{ request.file.url }}" target="_blank">Download Attachment</a>
+                                <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#viewModal{{ request.id }}">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                You have no service requests yet. <a href="{% url 'create_request' %}" class="btn btn-link">Create one now</a>.
+            </div>
+        {% endif %}
+
+        <!-- Create New Service Request Button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'create_request' %}" class="create-request-btn">
+                <i class="fas fa-plus-circle"></i> Create New Service Request
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Gas Utility Service. All rights reserved.</p>
+        <div class="social-icons">
+            <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+            <a href="#" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+        </div>
+        <p><a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <!-- Bootstrap JS (for interactive components like modals) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal for File Preview -->
+    {% for request in requests %}
+        <div class="modal fade" id="viewModal{{ request.id }}" tabindex="-1" aria-labelledby="viewModalLabel{{ request.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="viewModalLabel{{ request.id }}">View Attachment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if request.file.name|slice:"-4:" == '.jpg' or request.file.name|slice:"-4:" == '.png' or request.file.name|slice:"-5:" == '.jpeg' %}
+                            <img src="{{ request.file.url }}" alt="File preview" class="img-fluid">
+                        {% else %}
+                            <p>Preview not available for this file type.</p>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>
